@@ -1,4 +1,5 @@
-// script.js（ハート型クリッピングマスク方式：外側は白、角は必ず守る）
+// script.js（ドット風・角丸モジュール＋ハートマスク＋ガイド保護）
+// 前提：index.html に form / urlInput / colorSelect / sizeSelect / error / qrCanvas / downloadBtn / metaText がある
 (() => {
   const form = document.getElementById("form");
   const urlInput = document.getElementById("urlInput");
@@ -12,35 +13,42 @@
 
   // 必須仕様
   const ERROR_LEVEL = "H";
-  const BG_COLOR = "#FFFFFF";
+  const BG = "#FFFFFF";
   const MAX_LEN = 300;
 
-  // 読み取りのための余白（quiet zone）
-  // ハートで外周を削るので、ここは広めが安定
-  const QUIET_ZONE_MODULES = 8;
+  // quiet zone（読み取り試験を想定して十分広く）
+  const QUIET = 8;
 
-  // 角（位置検出パターン）を壊さないための保護領域
+  // Finder（角のガイド）を壊さない保護領域
   // 9 = finder(7) + separator(1) + 安全マージン(1)
   const FINDER_PROTECT = 9;
 
-  // ハート形状チューニング（まずはこれで様子を見る）
-  const HEART = {
-    // ハートを縦長にするとハートっぽく見える
-    sx: 0.95,
-    sy: 1.12,
-    // 少し上に寄せると下の尖りが出る
-    yShift: 0.10,
-    // ハートを少し大きめに（小さくすると丸っこくなる）
-    scale: 1.02,
-    // クリップ境界を少しだけ外側へ（見た目の輪郭が出る）
-    expand: 0.10,
-  };
+  // 見た目チューニング
+  const LOOK = {
+    // モジュールを「ドット風」に：小さいほどスカスカで可愛いが読取は下がる
+    // 推奨 0.70〜0.90
+    dotScale: 0.82,
 
-  // ハート方程式： (x^2 + y^2 - 1)^3 - x^2*y^3 <= 0
-  function heartValue(x, y) {
-    const a = x * x + y * y - 1;
-    return a * a * a - x * x * y * y * y;
-  }
+    // 角丸の丸み（0〜0.5くらい） 大きいほど“ドット感”
+    roundness: 0.38,
+
+    // ハート形状（内側判定のスケール）
+    heartSx: 0.95,
+    heartSy: 1.10,
+    heartYShift: 0.08,
+
+    // ハートを少し強める（内側判定を少し緩める）
+    // 大きすぎると欠損が増えて読めなくなる
+    heartExpand: 0.08,
+
+    // ハートの中に残す割合（小さいほどハートが大きくなる＝削りが増える）
+    // 推奨 0.86〜0.98
+    heartSizeFactor: 0.92,
+
+    // 出力外側余白（px）
+    outerPadMin: 24,
+    outerPadRatio: 0.08,
+  };
 
   function setError(msg) {
     errorEl.textContent = msg || "";
@@ -50,7 +58,6 @@
     const v = (input || "").trim();
     if (!v) return { ok: false, msg: "URLを入力してください。" };
     if (v.length > MAX_LEN) return { ok: false, msg: `URLは最大${MAX_LEN}文字までです。` };
-
     try {
       const test = v.includes("://") ? v : `https://${v}`;
       new URL(test);
@@ -63,18 +70,18 @@
   function normalizeUrl(raw) {
     const v = (raw || "").trim();
     if (!v) return v;
-    if (v.includes("://")) return v;
-    return `https://${v}`;
+    return v.includes("://") ? v : `https://${v}`;
   }
 
-  function clearToWhite(sizePx) {
+  function clearWhite(sizePx) {
     canvas.width = sizePx;
     canvas.height = sizePx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = BG_COLOR;
+    ctx.fillStyle = BG;
     ctx.fillRect(0, 0, sizePx, sizePx);
   }
 
+  // finder保護
   function isInFinderProtected(r, c, n) {
     const inTL = r < FINDER_PROTECT && c < FINDER_PROTECT;
     const inTR = r < FINDER_PROTECT && c >= (n - FINDER_PROTECT);
@@ -82,167 +89,146 @@
     return inTL || inTR || inBL;
   }
 
-  function makeQrMatrix(text) {
+  // ハート式 (x^2 + y^2 - 1)^3 - x^2*y^3 <= 0
+  function heartValue(x, y) {
+    const a = x * x + y * y - 1;
+    return a * a * a - x * x * y * y * y;
+  }
+
+  function inHeart(nx, ny) {
+    const x = nx / LOOK.heartSx;
+    const y = (ny + LOOK.heartYShift) / LOOK.heartSy;
+    return heartValue(x, y) <= LOOK.heartExpand;
+  }
+
+  // 角丸四角（ドット風）を描く
+  function roundRect(x, y, w, h, r) {
+    const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function render(text, fgHex, sizePx) {
     if (typeof window.qrcode !== "function") {
       throw new Error("QRライブラリの読み込みに失敗しました。");
     }
+
+    // QR生成
     const qr = window.qrcode(0, ERROR_LEVEL);
     qr.addData(text);
     qr.make();
-
     const n = qr.getModuleCount();
-    const m = new Array(n);
+
+    // moduleSize
+    const moduleSize = Math.floor(sizePx / (n + QUIET * 2));
+    if (moduleSize < 2) throw new Error("出力サイズが小さすぎます。サイズを大きくしてください。");
+
+    // QR全体（quiet含む）を実描画するサイズ
+    const drawSize = moduleSize * (n + QUIET * 2);
+
+    // 外側余白（読み取り安定）
+    const extraOuter = Math.max(LOOK.outerPadMin, Math.floor(drawSize * LOOK.outerPadRatio));
+    const finalSize = drawSize + extraOuter * 2;
+
+    clearWhite(finalSize);
+
+    const offset = extraOuter + QUIET * moduleSize;
+
+    // ハート判定用中心
+    const center = (n - 1) / 2;
+    const sf = LOOK.heartSizeFactor;
+
+    ctx.fillStyle = fgHex;
+
     for (let r = 0; r < n; r++) {
-      m[r] = new Array(n);
       for (let c = 0; c < n; c++) {
-        m[r][c] = qr.isDark(r, c);
+        if (!qr.isDark(r, c)) continue;
+
+        // 角は必ず残す（読み取りの核）
+        const protectedFinder = isInFinderProtected(r, c, n);
+
+        let keep = protectedFinder;
+
+        if (!keep) {
+          // ハート内だけ描く
+          const nx = ((c - center) / center) * sf;
+          const ny = (-(r - center) / center) * sf;
+          keep = inHeart(nx, ny);
+        }
+
+        if (!keep) continue;
+
+        // ドット風描画
+        const x0 = offset + c * moduleSize;
+        const y0 = offset + r * moduleSize;
+
+        const s = moduleSize * LOOK.dotScale;
+        const pad = (moduleSize - s) / 2;
+        const x = x0 + pad;
+        const y = y0 + pad;
+
+        const radius = s * LOOK.roundness;
+
+        roundRect(x, y, s, s, radius);
       }
     }
-    return { n, matrix: m };
-  }
 
-  function drawQrToCanvas(targetCtx, matrix, n, moduleSize, offsetPx, fgHex) {
-    targetCtx.fillStyle = fgHex;
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c < n; c++) {
-        if (!matrix[r][c]) continue;
-        const x = offsetPx + c * moduleSize;
-        const y = offsetPx + r * moduleSize;
-        targetCtx.fillRect(x, y, moduleSize, moduleSize);
-      }
-    }
-  }
-
-  function heartClipPath(c, sizePx) {
-    // 正規化座標でハートを描く（-1..1）
-    const steps = 240;
-    const pts = [];
-
-    // ハート領域をスキャンして輪郭点っぽく作るのではなく
-    // parametricで滑らかなパスを作る（見た目が綺麗）
-    // ただし式ベースの方が安定なので、ここは簡易に「円弧2つ＋下尖り」で作る
-    // 見た目優先で十分ハートに見える
-    const cx = sizePx / 2;
-    const cy = sizePx / 2;
-
-    const s = (sizePx / 2) * HEART.scale;
-
-    // ハートパス（ベジエで滑らかに）
-    c.beginPath();
-    c.moveTo(cx, cy + s * 0.55);
-
-    c.bezierCurveTo(
-      cx - s * 0.95, cy + s * 0.10,
-      cx - s * 0.90, cy - s * 0.60,
-      cx,            cy - s * 0.20
-    );
-    c.bezierCurveTo(
-      cx + s * 0.90, cy - s * 0.60,
-      cx + s * 0.95, cy + s * 0.10,
-      cx,            cy + s * 0.55
-    );
-    c.closePath();
-
-    // 位置調整（少し上寄せ）
-    // clipの前に変換を掛ける
-  }
-
-  function renderHeartMaskedQr(text, fgHex, sizePx) {
-    // 1) QR行列を作る
-    const { n, matrix } = makeQrMatrix(text);
-
-    // 2) moduleSize決定
-    // キャンバスサイズ内に quiet zone 込みで収める
-    const moduleSize = Math.floor(sizePx / (n + QUIET_ZONE_MODULES * 2));
-    if (moduleSize < 2) {
-      throw new Error("出力サイズが小さすぎます。サイズを大きくしてください。");
-    }
-
-    // 実際に描くQRの全体サイズ（quiet zone含む）
-    const qrAllSize = moduleSize * (n + QUIET_ZONE_MODULES * 2);
-
-    // 出力canvasは「qrAllSize + 周囲余白」を確保（読み取り試験用）
-    const extraOuter = Math.max(24, Math.floor(qrAllSize * 0.08));
-    const finalSize = qrAllSize + extraOuter * 2;
-
-    clearToWhite(finalSize);
-
-    // 中央にQR配置
+    // quiet zone を白で再強制（万一の侵食を防ぐ）
+    ctx.fillStyle = BG;
     const qx = extraOuter;
     const qy = extraOuter;
-    const offsetPx = extraOuter + QUIET_ZONE_MODULES * moduleSize;
+    const qSize = drawSize;
 
-    // 3) オフスクリーンに「正規QR（正方形）」を描く
-    const off = document.createElement("canvas");
-    off.width = finalSize;
-    off.height = finalSize;
-    const octx = off.getContext("2d");
-    octx.fillStyle = BG_COLOR;
-    octx.fillRect(0, 0, finalSize, finalSize);
+    // quiet zone “外枠”だけ白で上書き（中心のデータ領域は残す）
+    // ここで全部白にするとQRが消えるので、外周だけ
+    // 上
+    ctx.fillRect(qx, qy, qSize, QUIET * moduleSize);
+    // 下
+    ctx.fillRect(qx, qy + qSize - QUIET * moduleSize, qSize, QUIET * moduleSize);
+    // 左
+    ctx.fillRect(qx, qy, QUIET * moduleSize, qSize);
+    // 右
+    ctx.fillRect(qx + qSize - QUIET * moduleSize, qy, QUIET * moduleSize, qSize);
 
-    // quiet zone含む外枠は白、データ部だけ描く
-    drawQrToCanvas(octx, matrix, n, moduleSize, offsetPx, fgHex);
+    // 角の保護領域が quiet 上書きで欠けないよう、角だけもう一度描き直し（安全策）
+    ctx.fillStyle = fgHex;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (!qr.isDark(r, c)) continue;
+        if (!isInFinderProtected(r, c, n)) continue;
 
-    // 4) 出力にハートクリップして描画
-    // まず白で塗ってから、ハート内だけQRを転写
-    ctx.save();
-    ctx.fillStyle = BG_COLOR;
-    ctx.fillRect(0, 0, finalSize, finalSize);
+        const x0 = offset + c * moduleSize;
+        const y0 = offset + r * moduleSize;
+        const s = moduleSize * Math.min(0.92, LOOK.dotScale + 0.08); // finderは少し大きめ
+        const pad = (moduleSize - s) / 2;
+        const x = x0 + pad;
+        const y = y0 + pad;
+        const radius = s * Math.min(0.20, LOOK.roundness); // finderは丸めすぎない
+        roundRect(x, y, s, s, radius);
+      }
+    }
 
-    // クリップパス（上寄せ・縦長補正）
-    ctx.translate(0, -finalSize * 0.04); // 少し上へ
-    ctx.scale(HEART.sx, HEART.sy);
-
-    // スケールで座標がズレるので、逆補正
-    ctx.translate((finalSize * (1 - HEART.sx)) / (2 * HEART.sx), (finalSize * (1 - HEART.sy)) / (2 * HEART.sy));
-
-    // ハートパス作成
-    heartClipPath(ctx, finalSize);
-
-    ctx.clip();
-
-    // クリップ内にオフスクリーンQRを描く
-    ctx.drawImage(off, 0, 0);
-
-    ctx.restore();
-
-    // 5) Finder領域を「必ず復元」する（クリップで欠けた可能性を潰す）
-    // Finder + 周辺マージンを復元することで読み取り安定
-    const protectPx = FINDER_PROTECT * moduleSize;
-
-    // TL
-    ctx.drawImage(off, 0, 0, protectPx, protectPx, 0, 0, protectPx, protectPx);
-    // TR
-    ctx.drawImage(off, finalSize - protectPx, 0, protectPx, protectPx, finalSize - protectPx, 0, protectPx, protectPx);
-    // BL
-    ctx.drawImage(off, 0, finalSize - protectPx, protectPx, protectPx, 0, finalSize - protectPx, protectPx, protectPx);
-
-    // 6) さらに「quiet zone」は白が必須なので、ハート外周で侵食していないか保険
-    // 今回は off を転写しているので quiet zone は基本守られるが、
-    // Finder復元後に周囲を白で整える（最外周だけ）
-    ctx.fillStyle = BG_COLOR;
-    // 最外周1モジュール分の白枠
-    const rim = moduleSize;
-    ctx.fillRect(0, 0, finalSize, rim);
-    ctx.fillRect(0, finalSize - rim, finalSize, rim);
-    ctx.fillRect(0, 0, rim, finalSize);
-    ctx.fillRect(finalSize - rim, 0, rim, finalSize);
-
-    return { moduleCount: n, moduleSize, sizePx: finalSize };
+    return { modules: n, moduleSize, sizePx: finalSize };
   }
 
-  function downloadPng(filenameBase = "heart-qr") {
+  function downloadPng(nameBase) {
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${filenameBase}.png`;
+    a.download = `${nameBase}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   }
 
-  // 初期キャンバス
-  clearToWhite(parseInt(sizeSelect.value, 10));
+  // 初期
+  clearWhite(parseInt(sizeSelect.value, 10));
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -258,13 +244,13 @@
     }
 
     const text = normalizeUrl(raw);
-    const colorHex = colorSelect.value;
+    const fgHex = colorSelect.value;
     const sizePx = parseInt(sizeSelect.value, 10);
 
     try {
-      const info = renderHeartMaskedQr(text, colorHex, sizePx);
+      const info = render(text, fgHex, sizePx);
       downloadBtn.disabled = false;
-      metaText.textContent = `生成済み：${info.sizePx}px / modules=${info.moduleCount} / level=H / bg=white`;
+      metaText.textContent = `生成済み：${info.sizePx}px / modules=${info.modules} / level=H`;
     } catch (err) {
       downloadBtn.disabled = true;
       metaText.textContent = "未生成";
