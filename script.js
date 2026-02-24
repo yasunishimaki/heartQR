@@ -1,4 +1,4 @@
-// script.js
+// script.js（置き換え用：ハート強め版）
 (() => {
   const form = document.getElementById("form");
   const urlInput = document.getElementById("urlInput");
@@ -10,30 +10,50 @@
   const downloadBtn = document.getElementById("downloadBtn");
   const metaText = document.getElementById("metaText");
 
-  // ---- 固定仕様 ----
-  const ERROR_LEVEL = "H";        // 必ずH
-  const BG_COLOR = "#FFFFFF";     // 背景は白固定
+  // 固定仕様
+  const ERROR_LEVEL = "H";
+  const BG_COLOR = "#FFFFFF";
   const MAX_LEN = 300;
 
-  // 余白（quiet zone）を十分に確保：標準4モジュール + 追加で余裕
+  // 読み取り余白（quiet zone）を十分に
   const QUIET_ZONE_MODULES = 8;
 
-  // finder patterns（位置検出）を壊さないための保護領域（9x9推奨：7x7 + セパレータ）
+  // Finder（位置検出）を壊さない保護領域
+  // 9 = finder(7) + separator(1) + format周辺の安全マージン(1)
   const FINDER_PROTECT = 9;
 
-  // タイミングパターンも保護（安全寄り）
+  // タイミングパターン保護（基本壊さない）
   const PROTECT_TIMING = true;
 
-  // URLバリデーション（必須／最大300／形式ざっくり）
+  // ハート形状のチューニング
+  // 数値を変えると見た目が変わります（まずはこのままでOK）
+  const HEART = {
+    // 縦横スケール：縦を少し強めるとハートらしくなる
+    sx: 0.92,
+    sy: 1.10,
+
+    // 上下位置：少し上に寄せると下の尖りが出やすい
+    yShift: 0.10,
+
+    // ハート境界の拡張：少しだけ外側まで「中」とみなす（形を強調）
+    // 0 に近いほど厳密。大きすぎると読み取りが落ちる可能性あり。
+    expandThreshold: 0.10,
+
+    // ハートの“占有率”（小さいほどハートが大きくなる）
+    // 大きくしすぎると四角っぽく、下げすぎると欠損が増えます。
+    sizeFactor: 0.86,
+  };
+
+  function setError(msg) {
+    errorEl.textContent = msg || "";
+  }
+
   function validateUrl(input) {
     const v = (input || "").trim();
     if (!v) return { ok: false, msg: "URLを入力してください。" };
     if (v.length > MAX_LEN) return { ok: false, msg: `URLは最大${MAX_LEN}文字までです。` };
 
-    // 厳密にやりすぎない（QR用途なので）
-    // ただし type=url のバリデーションだけだと空文字等を通す可能性があるので補助
     try {
-      // 例: example.com だけだとURL()が落ちるので https を補って試す
       const test = v.includes("://") ? v : `https://${v}`;
       // eslint-disable-next-line no-new
       new URL(test);
@@ -43,26 +63,11 @@
     return { ok: true, msg: "" };
   }
 
-  // ハート領域判定（モジュール座標 -> 正規化してハート方程式）
-  // (x^2 + y^2 - 1)^3 - x^2*y^3 <= 0
-  function isInHeart(nx, ny) {
-    const x = nx;
-    const y = ny;
-    const a = x * x + y * y - 1;
-    const v = a * a * a - x * x * y * y * y;
-    return v <= 0;
-  }
-
-  // finder保護領域判定（r,c は 0..N-1）
-  function isInFinderProtected(r, c, n) {
-    const inTL = r < FINDER_PROTECT && c < FINDER_PROTECT;
-    const inTR = r < FINDER_PROTECT && c >= (n - FINDER_PROTECT);
-    const inBL = r >= (n - FINDER_PROTECT) && c < FINDER_PROTECT;
-    return inTL || inTR || inBL;
-  }
-
-  function isTimingProtected(r, c) {
-    return (r === 6 || c === 6);
+  function getNormalizedText(raw) {
+    const v = (raw || "").trim();
+    if (!v) return v;
+    if (v.includes("://")) return v;
+    return `https://${v}`;
   }
 
   function clearCanvasToWhite(sizePx) {
@@ -73,70 +78,88 @@
     ctx.fillRect(0, 0, sizePx, sizePx);
   }
 
-  // QRを生成して描画（ハートマスク：finderは保持）
+  // Finder保護判定
+  function isInFinderProtected(r, c, n) {
+    const inTL = r < FINDER_PROTECT && c < FINDER_PROTECT;
+    const inTR = r < FINDER_PROTECT && c >= (n - FINDER_PROTECT);
+    const inBL = r >= (n - FINDER_PROTECT) && c < FINDER_PROTECT;
+    return inTL || inTR || inBL;
+  }
+
+  // タイミングパターン保護判定
+  function isTimingProtected(r, c) {
+    return (r === 6 || c === 6);
+  }
+
+  // ハート方程式： (x^2 + y^2 - 1)^3 - x^2*y^3 <= 0
+  // これを基準に、拡張閾値で少し外側まで「中」にする
+  function heartValue(x, y) {
+    const a = x * x + y * y - 1;
+    return a * a * a - x * x * y * y * y;
+  }
+
+  function isInHeart(nx, ny) {
+    // スケール＋位置調整
+    const x = (nx / HEART.sx);
+    const y = ((ny + HEART.yShift) / HEART.sy);
+
+    // 値が小さいほど内側。 expandThreshold を足して内側判定を緩める
+    const v = heartValue(x, y);
+    return v <= HEART.expandThreshold;
+  }
+
   function renderQrHeart(text, colorHex, sizePx) {
     if (typeof window.qrcode !== "function") {
       throw new Error("QRライブラリの読み込みに失敗しました。ネットワーク環境を確認してください。");
     }
 
-    // 生成（型番号0 = 自動）
+    // QR生成（型番号0=自動、誤り訂正H固定）
     const qr = window.qrcode(0, ERROR_LEVEL);
     qr.addData(text);
     qr.make();
 
     const n = qr.getModuleCount();
 
-    // 1モジュールのピクセルサイズを決める
-    // 「n + quietZone*2」がsizePxに収まるように（整数）
+    // 1モジュールのピクセルサイズ
     const moduleSize = Math.floor(sizePx / (n + QUIET_ZONE_MODULES * 2));
     if (moduleSize < 2) {
       throw new Error("出力サイズが小さすぎます。サイズを大きくしてください。");
     }
 
-    // 実際の描画サイズ（端数を避ける）
     const drawSize = moduleSize * (n + QUIET_ZONE_MODULES * 2);
     const offset = moduleSize * QUIET_ZONE_MODULES;
 
     clearCanvasToWhite(drawSize);
 
-    // 心臓（ハート）をQRの「データ領域」にフィットさせるための正規化範囲
-    // 角のfinderを残すため、中心寄りに収める（scaleFactor を小さくするほどハートが大きく見える）
+    // 正規化用
     const center = (n - 1) / 2;
 
-    // finder領域の外からハート判定を行うため、ハートを少し大きめに
-    // 値を上げるとハートが小さくなる。下げると大きくなる。
-    const scaleFactor = 0.95;
+    // sizeFactor：小さいほどハートが大きくなる（=マスクが強くなる）
+    const sf = HEART.sizeFactor;
 
-    // まずは「通常のQR情報」をベースに描画しつつ、
-    // finder以外は「ハート外」を白で潰す（= マスク処理）。
-    // ※背景白固定／中央ロゴなし
     ctx.fillStyle = colorHex;
 
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
         const dark = qr.isDark(r, c);
 
-        // デフォルトは「QRのモジュール通りに描画」だが、
-        // finder(＋セパレータ)は絶対保持
+        // まず、絶対に守る領域
         const protectedFinder = isInFinderProtected(r, c, n);
         const protectedTiming = PROTECT_TIMING && isTimingProtected(r, c);
 
-        let keepAsIs = protectedFinder || protectedTiming;
+        let keep = protectedFinder || protectedTiming;
 
-        if (!keepAsIs) {
-          // 正規化座標: [-1, 1] 近辺に収める
-          // yは上が-なのでハートが上向きになるよう調整（ny を反転）
-          const nx = ((c - center) / center) * scaleFactor;
-          const ny = (-(r - center) / center) * scaleFactor;
+        if (!keep) {
+          // [-1, 1] に正規化してハート判定
+          // nyは上下反転（上をプラスにしてハートを上向きに）
+          const nx = ((c - center) / center) * sf;
+          const ny = (-(r - center) / center) * sf;
 
-          // ハート外なら「白で潰す」＝情報を減らすが、訂正レベルHで耐える設計
-          // ただし quiet zone（そもそも描画していない）には影響なし
-          const inHeart = isInHeart(nx, ny);
-          keepAsIs = inHeart;
+          keep = isInHeart(nx, ny);
         }
 
-        // keepAsIs=false の場合は背景白のまま（描画しない）
-        if (keepAsIs && dark) {
+        // keep=false の場合は白のまま（描画しない）
+        if (keep && dark) {
           const x = offset + c * moduleSize;
           const y = offset + r * moduleSize;
           ctx.fillRect(x, y, moduleSize, moduleSize);
@@ -144,9 +167,8 @@
       }
     }
 
-    // さらに「読み取りテスト想定で十分な余白」を強化（外周の白枠）
-    // 画像外枠に少し余白（ピクセル）を足したいので、追加キャンバスに載せ替え
-    const extraPadPx = Math.max(12, Math.floor(drawSize * 0.04)); // 4% or min 12px
+    // 追加の外側白余白（読み取り安定化）
+    const extraPadPx = Math.max(16, Math.floor(drawSize * 0.05)); // 5% or min 16px
     const finalSize = drawSize + extraPadPx * 2;
 
     const tmp = document.createElement("canvas");
@@ -157,7 +179,6 @@
     tctx.fillRect(0, 0, finalSize, finalSize);
     tctx.drawImage(canvas, extraPadPx, extraPadPx);
 
-    // 反映
     canvas.width = finalSize;
     canvas.height = finalSize;
     ctx.fillStyle = BG_COLOR;
@@ -165,18 +186,6 @@
     ctx.drawImage(tmp, 0, 0);
 
     return { moduleCount: n, moduleSize, sizePx: finalSize };
-  }
-
-  function setError(msg) {
-    errorEl.textContent = msg || "";
-  }
-
-  function getNormalizedText(raw) {
-    const v = (raw || "").trim();
-    // 形式補正：スキームがなければ https:// を補う（QR用途として便利）
-    if (!v) return v;
-    if (v.includes("://")) return v;
-    return `https://${v}`;
   }
 
   function downloadPng(filenameBase = "heart-qr") {
@@ -189,7 +198,7 @@
     a.remove();
   }
 
-  // 初期：白キャンバス
+  // 初期表示：白キャンバス
   clearCanvasToWhite(parseInt(sizeSelect.value, 10));
 
   form.addEventListener("submit", (e) => {
@@ -221,10 +230,8 @@
   });
 
   downloadBtn.addEventListener("click", () => {
-    // URL未入力や未生成の状態で押せないようdisabledにしているが、念のため
     if (downloadBtn.disabled) return;
 
-    // ファイル名はドメインっぽく（安全な文字だけ）
     const raw = (urlInput.value || "").trim();
     const text = getNormalizedText(raw);
     const safe = text
@@ -237,15 +244,9 @@
     downloadPng(`heart-qr_${safe}`);
   });
 
-  // レスポンシブ：表示サイズはCSSで制御。生成サイズは選択式。
-  // 文字数カウンタ的なエラー（300超）を入力中に軽く補助
   urlInput.addEventListener("input", () => {
     const v = urlInput.value || "";
-    if (v.length > MAX_LEN) {
-      setError(`URLは最大${MAX_LEN}文字までです。`);
-    } else if (errorEl.textContent) {
-      // 入力し始めたらエラーを薄く消す
-      setError("");
-    }
+    if (v.length > MAX_LEN) setError(`URLは最大${MAX_LEN}文字までです。`);
+    else if (errorEl.textContent) setError("");
   });
 })();
