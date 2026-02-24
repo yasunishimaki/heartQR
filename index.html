@@ -1,0 +1,89 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ハート型QRコード生成</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>ハート型QRコード生成</h1>
+      <p class="sub">URLからハート型QRを生成し、PNGで保存できます（訂正レベルH／背景白固定）。</p>
+    </header>
+
+    <section class="card">
+      <form id="form" class="form" novalidate>
+        <label class="label" for="urlInput">URL（必須・最大300文字）</label>
+        <div class="inputRow">
+          <input
+            id="urlInput"
+            name="url"
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            maxlength="300"
+            placeholder="https://example.com"
+            required
+          />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="label" for="colorSelect">QRの色（8色）</label>
+            <select id="colorSelect" aria-label="QRの色">
+              <option value="#111111">ブラック</option>
+              <option value="#0B3D91">ネイビー</option>
+              <option value="#0B5D1E">ディープグリーン</option>
+              <option value="#B0006D">マゼンタ</option>
+              <option value="#B00020">ディープレッド</option>
+              <option value="#4A148C">パープル</option>
+              <option value="#A04800">ダークオレンジ</option>
+              <option value="#006064">ダークティール</option>
+            </select>
+          </div>
+
+          <div class="field small">
+            <label class="label" for="sizeSelect">出力サイズ</label>
+            <select id="sizeSelect" aria-label="出力サイズ">
+              <option value="512" selected>512px</option>
+              <option value="640">640px</option>
+              <option value="768">768px</option>
+              <option value="1024">1024px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button type="submit" id="generateBtn">生成</button>
+          <button type="button" id="downloadBtn" disabled>PNGダウンロード</button>
+        </div>
+
+        <p id="error" class="error" role="alert" aria-live="polite"></p>
+        <p class="hint">
+          読み取り用の余白（quiet zone）を広めに確保しています。印刷する場合は「実寸」で印刷してください。
+        </p>
+      </form>
+    </section>
+
+    <section class="preview card" aria-label="プレビュー">
+      <div class="canvasWrap">
+        <canvas id="qrCanvas" width="512" height="512" aria-label="QRコード"></canvas>
+      </div>
+      <div class="meta">
+        <span id="metaText">未生成</span>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>背景は白固定／中央ロゴなし／訂正レベルH固定</small>
+    </footer>
+  </main>
+
+  <!-- QR生成ライブラリ（qrcode-generator） -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
