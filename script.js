@@ -113,16 +113,16 @@
     ctx.fill();
   }
 
-  function drawPattern(type, color, sizePx, clipRect) {
-    // clipRect: {x,y,w,h} ここにだけ柄を描く（QR全体 or QR外側など）
+  function drawPattern(c, type, color, sizePx, clipRect) {
+    // c: CanvasRenderingContext2D, clipRect: {x,y,w,h} ここにだけ柄を描く
     const { x, y, w, h } = clipRect;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(x, y, w, h);
-    ctx.clip();
+    c.save();
+    c.beginPath();
+    c.rect(x, y, w, h);
+    c.clip();
 
-    ctx.fillStyle = color;
-    ctx.strokeStyle = color;
+    c.fillStyle = color;
+    c.strokeStyle = color;
 
     if (type === "none") {
       // 何もしない
@@ -131,51 +131,49 @@
       const r = 1.6;
       for (let yy = y; yy < y + h; yy += step) {
         for (let xx = x; xx < x + w; xx += step) {
-          ctx.beginPath();
-          ctx.arc(xx + step / 2, yy + step / 2, r, 0, Math.PI * 2);
-          ctx.fill();
+          c.beginPath();
+          c.arc(xx + step / 2, yy + step / 2, r, 0, Math.PI * 2);
+          c.fill();
         }
       }
     } else if (type === "stripes") {
       const step = 18;
-      ctx.lineWidth = 2;
+      c.lineWidth = 2;
       for (let i = -sizePx; i < sizePx * 2; i += step) {
-        ctx.beginPath();
-        ctx.moveTo(i, y);
-        ctx.lineTo(i + sizePx, y + sizePx);
-        ctx.stroke();
+        c.beginPath();
+        c.moveTo(i, y);
+        c.lineTo(i + sizePx, y + sizePx);
+        c.stroke();
       }
     } else if (type === "grid") {
       const step = 18;
-      ctx.lineWidth = 1.5;
+      c.lineWidth = 1.5;
       for (let xx = x; xx <= x + w; xx += step) {
-        ctx.beginPath();
-        ctx.moveTo(xx, y);
-        ctx.lineTo(xx, y + h);
-        ctx.stroke();
+        c.beginPath();
+        c.moveTo(xx, y);
+        c.lineTo(xx, y + h);
+        c.stroke();
       }
       for (let yy = y; yy <= y + h; yy += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, yy);
-        ctx.lineTo(x + w, yy);
-        ctx.stroke();
+        c.beginPath();
+        c.moveTo(x, yy);
+        c.lineTo(x + w, yy);
+        c.stroke();
       }
     } else if (type === "noise") {
       // 軽いノイズ（紙っぽい）
-      const img = ctx.getImageData(x, y, w, h);
+      const img = c.getImageData(x, y, w, h);
       const data = img.data;
       for (let i = 0; i < data.length; i += 4) {
         const v = (Math.random() * 18) | 0; // 0..17
-        // colorはrgba指定なので、ここは黒系ノイズに寄せる
         data[i] = Math.min(255, data[i] + v);
         data[i + 1] = Math.min(255, data[i + 1] + v);
         data[i + 2] = Math.min(255, data[i + 2] + v);
-        // alphaはそのまま
       }
-      ctx.putImageData(img, x, y);
+      c.putImageData(img, x, y);
     }
 
-    ctx.restore();
+    c.restore();
   }
 
   function render(text, fgHex, heartHex, sizePx, patternType, patternColor) {
@@ -202,7 +200,7 @@
     clearWhite(finalSize);
 
     // まず背景柄を「全体」に薄く入れる（whiteを保ちつつ雰囲気）
-    drawPattern(patternType, patternColor, finalSize, { x: 0, y: 0, w: finalSize, h: finalSize });
+    drawPattern(ctx, patternType, patternColor, finalSize, { x: 0, y: 0, w: finalSize, h: finalSize });
 
     // QR領域（quiet含む）を白で戻す（背景柄がquietに入ると読取に影響）
     const qrX = outer;
@@ -225,13 +223,8 @@
       pctx.fillStyle = BG;
       pctx.fillRect(0, 0, finalSize, finalSize);
 
-      // ここではパターンを描画（本体と同じ見え方）
-      // drawPatternはctx固定なので、ここだけローカル実装
-      const tmp = ctx;
-      // 擬似的に差し替え
-      ctx = pctx; // eslint-disable-line no-func-assign
-      drawPattern(patternType, patternColor, finalSize, { x: 0, y: 0, w: finalSize, h: finalSize });
-      ctx = tmp; // eslint-disable-line no-func-assign
+      // オフスクリーン用コンテキストに直接描画（ctxの再代入不要）
+      drawPattern(pctx, patternType, patternColor, finalSize, { x: 0, y: 0, w: finalSize, h: finalSize });
     }
 
     // モジュール描画オフセット
