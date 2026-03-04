@@ -1,114 +1,474 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ハート型QRコードジェネレーター</title>
+  <title>キャリアデザインカードゲーム授業 提案サイト</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- QR生成ライブラリ（qrcode-generator） -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body>
-  <main class="wrap">
-    <header class="header">
-      <h1>ハート型QRコード生成</h1>
-      <p class="sub">URLからハート型のQRコードを作成し、PNGでダウンロードできます（誤り訂正：H / 背景：白固定）。</p>
-    </header>
 
-    <section class="card">
-      <form id="form" class="form" novalidate>
-        <div class="grid">
-          <label class="field col-2">
-            <span>URL（必須 / 最大300文字）</span>
-            <input id="urlInput" type="text" maxlength="300" placeholder="https://example.com" autocomplete="off" />
-          </label>
-
-          <label class="field">
-            <span>QRの色</span>
-            <select id="colorSelect">
-              <option value="#111111">黒</option>
-              <option value="#E53935">赤</option>
-              <option value="#1E88E5">青</option>
-              <option value="#43A047">緑</option>
-              <option value="#FB8C00">オレンジ</option>
-              <option value="#8E24AA">紫</option>
-              <option value="#00897B">青緑</option>
-              <option value="#D81B60" selected>マゼンタ</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>ハート強調色</span>
-            <select id="heartColorSelect">
-              <option value="#111111">黒</option>
-              <option value="#E53935" selected>赤</option>
-              <option value="#1E88E5">青</option>
-              <option value="#43A047">緑</option>
-              <option value="#FB8C00">オレンジ</option>
-              <option value="#8E24AA">紫</option>
-              <option value="#00897B">青緑</option>
-              <option value="#D81B60">マゼンタ</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>背景柄</span>
-            <select id="bgPatternSelect">
-              <option value="none">なし</option>
-              <option value="dots">ドット</option>
-              <option value="stripes" selected>斜めストライプ</option>
-              <option value="grid">チェック</option>
-              <option value="noise">紙っぽい</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>背景柄の色（薄め推奨）</span>
-            <select id="bgPatternColorSelect">
-              <option value="rgba(0,0,0,0.06)">薄い黒</option>
-              <option value="rgba(229,57,53,0.08)">薄い赤</option>
-              <option value="rgba(30,136,229,0.08)">薄い青</option>
-              <option value="rgba(67,160,71,0.08)">薄い緑</option>
-              <option value="rgba(0,0,0,0.10)" selected>やや濃い黒</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>サイズ</span>
-            <select id="sizeSelect">
-              <option value="512">512px</option>
-              <option value="768" selected>768px</option>
-              <option value="1024">1024px</option>
-              <option value="1280">1280px</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="row">
-          <button class="btn primary" type="submit">生成</button>
-          <button class="btn" id="downloadBtn" type="button" disabled>PNGダウンロード</button>
-        </div>
-
-        <p id="error" class="error" aria-live="polite"></p>
-        <p class="meta"><span id="metaText">未生成</span></p>
-      </form>
-    </section>
-
-    <section class="card preview">
-      <div class="canvasWrap">
-        <canvas id="qrCanvas" width="768" height="768" aria-label="QR preview"></canvas>
-      </div>
-      <p class="hint">
-        読み取りテストは、まずスマホ標準カメラで。読めない場合は「サイズを上げる」「URLを短くする」「ハート強調色を濃くする」を試してください。
+  <!-- ========== HERO ========== -->
+  <section class="hero">
+    <div class="hero__inner">
+      <p class="hero__eyebrow">授業改善提案</p>
+      <h1 class="hero__title">
+        カードゲームで<br>
+        <em>キャリアをデザインする</em>
+      </h1>
+      <p class="hero__lead">
+        「将来何になりたいの？」その問いに正解はありません。<br>
+        自分の価値観・強み・可能性を仲間と一緒にカードで可視化し、<br>
+        対話を通じてキャリアビジョンを育てる授業プログラムです。
       </p>
-    </section>
+      <div class="hero__btns">
+        <a class="btn btn--primary" href="#overview">授業概要を見る</a>
+        <a class="btn btn--ghost" href="#contact">お問い合わせ</a>
+      </div>
+    </div>
+    <div class="hero__cards" aria-hidden="true">
+      <div class="hcard hcard--1">🎯<span>価値観</span></div>
+      <div class="hcard hcard--2">💼<span>スキル</span></div>
+      <div class="hcard hcard--3">🌟<span>職種</span></div>
+      <div class="hcard hcard--4">🎲<span>イベント</span></div>
+    </div>
+  </section>
 
-    <footer class="footer">
-      <small>背景色は白固定。位置検出パターン（3つの角）は破壊しない設計です。</small>
-    </footer>
-  </main>
+  <!-- ========== STATS ========== -->
+  <section class="stats">
+    <div class="stats__inner wrap">
+      <div class="stat">
+        <span class="stat__num" data-target="94">0</span><span class="stat__unit">%</span>
+        <p class="stat__label">参加者の「自己理解が深まった」回答率</p>
+      </div>
+      <div class="stat">
+        <span class="stat__num" data-target="4">0</span><span class="stat__unit">回</span>
+        <p class="stat__label">授業セッション数（各50分）</p>
+      </div>
+      <div class="stat">
+        <span class="stat__num" data-target="5">0</span><span class="stat__unit">種</span>
+        <p class="stat__label">カードの種類</p>
+      </div>
+      <div class="stat">
+        <span class="stat__num" data-target="30">0</span><span class="stat__unit">名</span>
+        <p class="stat__label">推奨クラス規模（最大）</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== OVERVIEW ========== -->
+  <section id="overview" class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">授業概要</span>
+        <h2 class="section__title">なぜカードゲームで<br>キャリアを学ぶのか</h2>
+        <p class="section__lead">
+          一般的なキャリア授業では「正解を教える」形式が多く、学生は受け身になりがちです。
+          本プログラムはゲームの構造を使い、試行錯誤・対話・発見を繰り返しながら
+          <strong>自分だけのキャリアビジョン</strong>を作り上げます。
+        </p>
+      </div>
+
+      <div class="reasons">
+        <div class="reason">
+          <div class="reason__icon">🎮</div>
+          <h3>ゲームで動機づけ</h3>
+          <p>ゲームの「楽しさ」「競争」「協力」の要素が、キャリア探索への積極的な参加を引き出します。</p>
+        </div>
+        <div class="reason">
+          <div class="reason__icon">🗣️</div>
+          <h3>対話で気づきを深める</h3>
+          <p>他者のカード選択を見て「そんな視点もあるのか」という驚きが、自己理解を広げます。</p>
+        </div>
+        <div class="reason">
+          <div class="reason__icon">🔄</div>
+          <h3>繰り返せる安全な場</h3>
+          <p>ゲームだから「失敗」も学びになります。現実のキャリア選択の前に何度でも試せます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CARDS ========== -->
+  <section id="cards" class="section section--tinted">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">カード紹介</span>
+        <h2 class="section__title">5種類のカードで<br>キャリアを組み立てる</h2>
+        <p class="section__lead">各カードはそれぞれ異なる視点を提供します。タブをクリックして詳細を確認してください。</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tabs__nav" role="tablist">
+          <button class="tab-btn active" role="tab" data-tab="values">🎯 価値観</button>
+          <button class="tab-btn" role="tab" data-tab="skills">💼 スキル</button>
+          <button class="tab-btn" role="tab" data-tab="careers">🌟 職種</button>
+          <button class="tab-btn" role="tab" data-tab="events">🎲 イベント</button>
+          <button class="tab-btn" role="tab" data-tab="chance">💡 チャンス</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-values">
+          <div class="card-showcase">
+            <div class="card-demo card-demo--values">
+              <div class="card-demo__type">価値観カード</div>
+              <div class="card-demo__icon">🎯</div>
+              <div class="card-demo__name">チャレンジ</div>
+              <div class="card-demo__desc">新しいことに挑戦し続ける姿勢を最も大切にする</div>
+            </div>
+            <div class="card-showcase__text">
+              <h3>価値観カード（40枚）</h3>
+              <p>「安定」「成長」「貢献」「創造性」「ワークライフバランス」など、働く上で大切にしたい価値観が書かれたカードです。</p>
+              <ul>
+                <li>自分が最も重視する価値観を3〜5枚選ぶ</li>
+                <li>グループで選んだ理由を共有する</li>
+                <li>価値観が職種選択にどう影響するかを考える</li>
+              </ul>
+              <div class="card-samples">
+                <span class="chip">安定・安全</span>
+                <span class="chip">成長・学習</span>
+                <span class="chip">社会貢献</span>
+                <span class="chip">自律・裁量</span>
+                <span class="chip">創造・革新</span>
+                <span class="chip">仲間・チーム</span>
+                <span class="chip">報酬・評価</span>
+                <span class="chip">バランス</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-skills">
+          <div class="card-showcase">
+            <div class="card-demo card-demo--skills">
+              <div class="card-demo__type">スキルカード</div>
+              <div class="card-demo__icon">💼</div>
+              <div class="card-demo__name">論理的思考</div>
+              <div class="card-demo__desc">情報を整理し筋道立てて考える力</div>
+            </div>
+            <div class="card-showcase__text">
+              <h3>スキルカード（50枚）</h3>
+              <p>「コミュニケーション」「分析力」「リーダーシップ」など、仕事で活かせるスキルが書かれたカードです。</p>
+              <ul>
+                <li>現在持っているスキルを選ぶ</li>
+                <li>将来身につけたいスキルを選ぶ</li>
+                <li>職種カードとのマッチングを確認する</li>
+              </ul>
+              <div class="card-samples">
+                <span class="chip">コミュニケーション</span>
+                <span class="chip">分析・データ</span>
+                <span class="chip">プレゼン</span>
+                <span class="chip">デザイン思考</span>
+                <span class="chip">語学</span>
+                <span class="chip">プログラミング</span>
+                <span class="chip">交渉・説得</span>
+                <span class="chip">計画・管理</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-careers">
+          <div class="card-showcase">
+            <div class="card-demo card-demo--careers">
+              <div class="card-demo__type">職種カード</div>
+              <div class="card-demo__icon">🌟</div>
+              <div class="card-demo__name">UXデザイナー</div>
+              <div class="card-demo__desc">ユーザー体験を設計し、人が使いやすいサービスを作る</div>
+            </div>
+            <div class="card-showcase__text">
+              <h3>職種カード（60枚）</h3>
+              <p>多様な職種の仕事内容・必要スキル・やりがいが書かれたカードです。実際の職業の解像度を上げます。</p>
+              <ul>
+                <li>気になる職種カードを自由に選ぶ</li>
+                <li>価値観・スキルカードとの相性を確認する</li>
+                <li>職種の「リアル」を班内で調査・共有する</li>
+              </ul>
+              <div class="card-samples">
+                <span class="chip">エンジニア</span>
+                <span class="chip">デザイナー</span>
+                <span class="chip">マーケター</span>
+                <span class="chip">研究者</span>
+                <span class="chip">教育者</span>
+                <span class="chip">医療・福祉</span>
+                <span class="chip">起業家</span>
+                <span class="chip">公務員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-events">
+          <div class="card-showcase">
+            <div class="card-demo card-demo--events">
+              <div class="card-demo__type">イベントカード</div>
+              <div class="card-demo__icon">🎲</div>
+              <div class="card-demo__name">リモートワーク化</div>
+              <div class="card-demo__desc">社会環境が変化。あなたのキャリアにどう影響する？</div>
+            </div>
+            <div class="card-showcase__text">
+              <h3>イベントカード（30枚）</h3>
+              <p>「転職」「技術革新」「育児・介護」などキャリアの転機となる出来事が書かれたカードです。</p>
+              <ul>
+                <li>ランダムに引いてシナリオに組み込む</li>
+                <li>そのイベントが起きたらどうするかを議論する</li>
+                <li>変化への対応力・レジリエンスを体験する</li>
+              </ul>
+              <div class="card-samples">
+                <span class="chip">転職・独立</span>
+                <span class="chip">AI台頭</span>
+                <span class="chip">育児・介護</span>
+                <span class="chip">海外赴任</span>
+                <span class="chip">昇進・降格</span>
+                <span class="chip">副業解禁</span>
+                <span class="chip">健康問題</span>
+                <span class="chip">業界再編</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-chance">
+          <div class="card-showcase">
+            <div class="card-demo card-demo--chance">
+              <div class="card-demo__type">チャンスカード</div>
+              <div class="card-demo__icon">💡</div>
+              <div class="card-demo__name">メンターとの出会い</div>
+              <div class="card-demo__desc">人生の転機をくれる人物に出会い、新たな道が開ける</div>
+            </div>
+            <div class="card-showcase__text">
+              <h3>チャンスカード（20枚）</h3>
+              <p>「思わぬ出会い」「意外な才能の発見」など、キャリアの可能性を広げる機会が書かれたカードです。</p>
+              <ul>
+                <li>特定のゲームフェーズで引ける</li>
+                <li>キャリアを大きく変える可能性を持つ</li>
+                <li>「偶発性」がキャリアに与える影響を学ぶ</li>
+              </ul>
+              <div class="card-samples">
+                <span class="chip">社内公募</span>
+                <span class="chip">留学機会</span>
+                <span class="chip">起業チャンス</span>
+                <span class="chip">スカウト</span>
+                <span class="chip">新事業参加</span>
+                <span class="chip">表彰・受賞</span>
+                <span class="chip">資格取得</span>
+                <span class="chip">SNSで注目</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FLOW ========== -->
+  <section id="flow" class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">授業の流れ</span>
+        <h2 class="section__title">4回のセッションで<br>キャリアビジョンを育てる</h2>
+        <p class="section__lead">各回50分・4回完結のプログラムです。単発での実施や既存授業への組み込みも相談可能です。</p>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline__item">
+          <div class="timeline__badge">1</div>
+          <div class="timeline__content">
+            <div class="timeline__header">
+              <h3>第1回：自己発見ゲーム</h3>
+              <span class="timeline__time">50分</span>
+            </div>
+            <p>価値観カード・スキルカードを使って「自分が何を大切にしているか」「どんな強みがあるか」を可視化します。グループ内でシェアし、多様な視点に触れます。</p>
+            <div class="timeline__tags">
+              <span class="chip chip--sm">🎯 価値観カード</span>
+              <span class="chip chip--sm">💼 スキルカード</span>
+              <span class="chip chip--sm">グループワーク</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__badge">2</div>
+          <div class="timeline__content">
+            <div class="timeline__header">
+              <h3>第2回：職種探索ゲーム</h3>
+              <span class="timeline__time">50分</span>
+            </div>
+            <p>職種カードを使って多様なキャリアを探索。価値観・スキルカードとマッチングさせながら「なぜその職種が気になるのか」を言語化します。</p>
+            <div class="timeline__tags">
+              <span class="chip chip--sm">🌟 職種カード</span>
+              <span class="chip chip--sm">マッチング演習</span>
+              <span class="chip chip--sm">言語化トレーニング</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__badge">3</div>
+          <div class="timeline__content">
+            <div class="timeline__header">
+              <h3>第3回：キャリアシミュレーション</h3>
+              <span class="timeline__time">50分</span>
+            </div>
+            <p>イベントカード・チャンスカードを組み合わせ、「10年後のキャリア」をシミュレーション。想定外の出来事への対応力と、キャリアの柔軟性を体験します。</p>
+            <div class="timeline__tags">
+              <span class="chip chip--sm">🎲 イベントカード</span>
+              <span class="chip chip--sm">💡 チャンスカード</span>
+              <span class="chip chip--sm">シナリオ思考</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline__item">
+          <div class="timeline__badge">4</div>
+          <div class="timeline__content">
+            <div class="timeline__header">
+              <h3>第4回：ビジョン発表</h3>
+              <span class="timeline__time">50分</span>
+            </div>
+            <p>3回の学びを統合し、「自分のキャリアビジョンマップ」を作成・発表。カードを並べてビジュアル化したマップを仲間にプレゼンします。</p>
+            <div class="timeline__tags">
+              <span class="chip chip--sm">ビジョンマップ作成</span>
+              <span class="chip chip--sm">プレゼンテーション</span>
+              <span class="chip chip--sm">相互フィードバック</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== EFFECTS ========== -->
+  <section id="effects" class="section section--tinted">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">期待される効果</span>
+        <h2 class="section__title">このプログラムで<br>何が変わるのか</h2>
+      </div>
+
+      <div class="effects">
+        <div class="effect">
+          <div class="effect__num">01</div>
+          <h3>自己理解の深化</h3>
+          <p>自分の価値観・強みを言語化する機会を繰り返すことで、「自分らしさ」の輪郭が明確になります。</p>
+        </div>
+        <div class="effect">
+          <div class="effect__num">02</div>
+          <h3>視野の拡大</h3>
+          <p>60種類以上の職種カードと他者の選択に触れることで、知らなかったキャリアの可能性に気づきます。</p>
+        </div>
+        <div class="effect">
+          <div class="effect__num">03</div>
+          <h3>対話力の向上</h3>
+          <p>「なぜその選択をしたか」を言語化・共有するプロセスが、表現力とコミュニケーション力を鍛えます。</p>
+        </div>
+        <div class="effect">
+          <div class="effect__num">04</div>
+          <h3>変化への適応力</h3>
+          <p>イベントカードで「想定外」を体験することで、変化を恐れず柔軟にキャリアを描く力が身につきます。</p>
+        </div>
+        <div class="effect">
+          <div class="effect__num">05</div>
+          <h3>主体的な学びの姿勢</h3>
+          <p>ゲームで「楽しく」探索した経験が、卒業後も自らキャリアを学び続けるモチベーションを生みます。</p>
+        </div>
+        <div class="effect">
+          <div class="effect__num">06</div>
+          <h3>チームワーク体験</h3>
+          <p>グループゲームを通じて、多様な価値観を尊重しながら協力する職場でのチームワークを疑似体験します。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== REQUIREMENTS ========== -->
+  <section id="requirements" class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">実施要件</span>
+        <h2 class="section__title">導入に必要なもの</h2>
+        <p class="section__lead">特別な設備は不要です。通常の教室環境で実施できます。</p>
+      </div>
+
+      <div class="reqs">
+        <div class="req">
+          <div class="req__icon">👥</div>
+          <h4>対象</h4>
+          <p>高校生・大学生・専門学校生<br>社会人向け研修にも応用可</p>
+        </div>
+        <div class="req">
+          <div class="req__icon">🏫</div>
+          <h4>場所・設備</h4>
+          <p>グループワークができる教室<br>（4〜6名/グループ）</p>
+        </div>
+        <div class="req">
+          <div class="req__icon">📦</div>
+          <h4>教材</h4>
+          <p>カードセット（印刷物）<br>ワークシート・記録用紙</p>
+        </div>
+        <div class="req">
+          <div class="req__icon">👩‍🏫</div>
+          <h4>ファシリテーター</h4>
+          <p>教員1名 + 補助1名（推奨）<br>研修後は教員のみでも実施可</p>
+        </div>
+        <div class="req">
+          <div class="req__icon">💰</div>
+          <h4>費用</h4>
+          <p>カード印刷費（実費）<br>教員研修費（別途相談）</p>
+        </div>
+        <div class="req">
+          <div class="req__icon">📅</div>
+          <h4>スケジュール</h4>
+          <p>4回×50分（週1回推奨）<br>集中実施（1日）も対応可</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TESTIMONIALS ========== -->
+  <section class="section section--tinted">
+    <div class="wrap">
+      <div class="section__head">
+        <span class="tag">参加者の声</span>
+        <h2 class="section__title">試験実施クラスの<br>反応</h2>
+      </div>
+
+      <div class="voices">
+        <blockquote class="voice">
+          <p>「カードを選ぶだけなのに、自分が何を大切にしているかが整理されて驚きました。将来のことを考えるのが楽しくなりました。」</p>
+          <footer>大学1年生・文系</footer>
+        </blockquote>
+        <blockquote class="voice">
+          <p>「友達が選んだカードを見て、『そんな視点があるの！』って発見が多かった。ゲームだから本音で話せた気がします。」</p>
+          <footer>高校2年生</footer>
+        </blockquote>
+        <blockquote class="voice">
+          <p>「イベントカードで『育児との両立』が出たとき、初めて真剣に考えました。就活前に気づけてよかった。」</p>
+          <footer>大学3年生・理系</footer>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CONTACT ========== -->
+  <section id="contact" class="section">
+    <div class="wrap">
+      <div class="contact-box">
+        <h2>このプログラムに<br>ご興味をお持ちですか？</h2>
+        <p>体験会・資料請求・導入相談を無料で承っております。<br>お気軽にお問い合わせください。</p>
+        <div class="contact-btns">
+          <a class="btn btn--primary" href="mailto:info@example.com">メールでお問い合わせ</a>
+          <a class="btn btn--ghost" href="#">資料をダウンロード</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="wrap">
+      <p class="footer__copy">© 2026 キャリアデザインカードゲーム授業提案</p>
+    </div>
+  </footer>
 
   <script src="script.js"></script>
 </body>
