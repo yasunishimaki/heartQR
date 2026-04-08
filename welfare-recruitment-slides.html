@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>社会福祉関連職 新卒採用スケジュールの早期化</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a5276;
+  --accent:#e74c3c;
+  --green:#27ae60;
+  --orange:#e67e22;
+  --bg:#f4f6f9;
+  --slide-bg:#ffffff;
+  --text:#2c3e50;
+  --note-bg:#fffde7;
+  --note-border:#f9a825;
+}
+body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.toolbar{background:var(--primary);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:100;height:50px}
+.toolbar h1{font-size:14px;font-weight:700;letter-spacing:.05em}
+.toolbar-right{display:flex;gap:12px;align-items:center}
+.btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 14px;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit;transition:background .2s}
+.btn:hover{background:rgba(255,255,255,.35)}
+.btn.active{background:rgba(255,255,255,.4)}
+.slide-counter{font-size:13px;opacity:.85}
+main{margin-top:50px;flex:1;display:flex;flex-direction:column;align-items:center;padding:24px 20px 120px}
+.slide{width:100%;max-width:960px;background:var(--slide-bg);border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.1);overflow:hidden;display:none}
+.slide.active{display:block}
+.slide-header{background:var(--primary);color:#fff;padding:28px 40px 22px}
+.slide-header .slide-num{font-size:12px;opacity:.7;margin-bottom:6px;letter-spacing:.1em}
+.slide-header h2{font-size:28px;font-weight:700;line-height:1.3}
+.slide-header .subtitle{font-size:15px;opacity:.85;margin-top:8px}
+.slide-body{padding:32px 40px}
+.title-slide .slide-header{padding:60px 40px;text-align:center}
+.title-slide .slide-header h2{font-size:34px}
+.title-slide .slide-body{text-align:center;padding:40px}
+.title-slide .slide-body p{font-size:16px;color:#555;margin:8px 0}
+.kv{font-size:22px;font-weight:700;color:var(--primary);margin:20px 0 6px}
+.kv-sub{font-size:14px;color:#666}
+section.block{margin-bottom:24px}
+section.block h3{font-size:17px;font-weight:700;color:var(--primary);border-left:4px solid var(--primary);padding-left:12px;margin-bottom:12px}
+ul.bullets{padding-left:20px}
+ul.bullets li{font-size:15px;line-height:1.7;margin-bottom:6px}
+ul.bullets li strong{color:var(--accent)}
+ul.bullets li .green{color:var(--green);font-weight:700}
+ul.bullets li .orange{color:var(--orange);font-weight:700}
+.data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:16px 0}
+.data-card{background:#f8f9ff;border:1px solid #dce0f0;border-radius:8px;padding:16px;text-align:center}
+.data-card .num{font-size:32px;font-weight:700;color:var(--accent);line-height:1}
+.data-card .unit{font-size:14px;color:#666;margin-top:2px}
+.data-card .label{font-size:13px;color:#555;margin-top:8px;line-height:1.4}
+.data-card.green .num{color:var(--green)}
+.data-card.blue .num{color:var(--primary)}
+.data-card.orange .num{color:var(--orange)}
+table.slide-table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+table.slide-table th{background:var(--primary);color:#fff;padding:9px 12px;text-align:left;font-weight:600}
+table.slide-table td{padding:9px 12px;border-bottom:1px solid #e0e0e0;vertical-align:top;line-height:1.5}
+table.slide-table tr:nth-child(even) td{background:#f8f9fa}
+table.slide-table td strong{color:var(--accent)}
+.timeline{display:flex;flex-direction:column;gap:0}
+.timeline-item{display:flex;gap:16px;padding:10px 0;border-bottom:1px solid #eee}
+.timeline-item:last-child{border-bottom:none}
+.timeline-dot{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+.timeline-dot.red{background:var(--accent)}
+.timeline-dot.green{background:var(--green)}
+.timeline-dot.orange{background:var(--orange)}
+.timeline-content h4{font-size:15px;font-weight:700;margin-bottom:4px}
+.timeline-content p{font-size:13.5px;color:#555;line-height:1.5}
+.highlight-box{background:linear-gradient(135deg,#e8f4fd,#d6eaf8);border:1px solid #85c1e9;border-radius:8px;padding:16px 20px;margin:16px 0}
+.highlight-box p{font-size:15px;font-weight:600;color:var(--primary);line-height:1.6}
+.alert-box{background:#fff3f3;border:2px solid var(--accent);border-radius:8px;padding:16px 20px;margin:16px 0}
+.alert-box p{font-size:15px;font-weight:600;color:#c0392b;line-height:1.6}
+.green-box{background:#f0faf4;border:2px solid var(--green);border-radius:8px;padding:16px 20px;margin:16px 0}
+.green-box p{font-size:15px;font-weight:600;color:#1a7a40;line-height:1.6}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.compare-grid .col{border-radius:8px;padding:16px;font-size:14px}
+.compare-grid .col h4{font-size:15px;font-weight:700;margin-bottom:10px}
+.compare-grid .col ul{padding-left:18px}
+.compare-grid .col ul li{margin-bottom:6px;line-height:1.5}
+.col-general{background:#e8f4fd;border:1px solid #85c1e9}
+.col-general h4{color:var(--primary)}
+.col-welfare{background:#fff3cd;border:1px solid #f9a825}
+.col-welfare h4{color:#7d5a00}
+.instructor-note{background:var(--note-bg);border:2px solid var(--note-border);border-radius:8px;padding:20px 24px;margin-top:24px;display:none}
+.instructor-note.show{display:block}
+.instructor-note h4{font-size:14px;font-weight:700;color:#7d5a00;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.instructor-note h4::before{content:"📝";font-size:16px}
+.instructor-note p,.instructor-note li{font-size:14px;color:#5d4037;line-height:1.7}
+.instructor-note ul{padding-left:18px;margin-top:6px}
+.instructor-note ul li{margin-bottom:4px}
+.instructor-note .timing{background:#ffe0b2;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:700;color:#e65100;display:inline-block;margin-top:8px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 20px;box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+.nav button{background:var(--primary);color:#fff;border:none;padding:10px 28px;border-radius:6px;cursor:pointer;font-size:15px;font-family:inherit;font-weight:600;transition:background .2s}
+.nav button:hover{background:#154360}
+.nav button:disabled{background:#bdc3c7;cursor:not-allowed}
+.progress-bar{height:4px;background:var(--primary);position:fixed;top:50px;left:0;transition:width .3s;z-index:99}
+.badge{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:2px 8px;border-radius:12px;vertical-align:middle;margin-left:6px}
+.badge.green{background:var(--green)}
+.badge.blue{background:var(--primary)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tag{display:inline-block;background:#e8f0fe;color:var(--primary);font-size:12px;font-weight:700;padding:2px 10px;border-radius:12px;margin:2px}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:12px 0}
+.flow-item{background:var(--primary);color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:6px}
+.flow-arrow{font-size:18px;color:#999}
+.flow-item.red{background:var(--accent)}
+.flow-item.green{background:var(--green)}
+.flow-item.orange{background:var(--orange)}
+.source{font-size:11px;color:#999;margin-top:16px;padding-top:12px;border-top:1px solid #eee}
+.source a{color:#999;text-decoration:none}
+@media(max-width:640px){
+  .slide-header{padding:20px}
+  .slide-header h2{font-size:20px}
+  .slide-body{padding:20px}
+  .data-grid{grid-template-columns:1fr 1fr}
+  .data-card .num{font-size:24px}
+  .two-col,.compare-grid{grid-template-columns:1fr}
+  table.slide-table{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <h1>社会福祉関連職 新卒採用スケジュールの早期化</h1>
+  <div class="toolbar-right">
+    <span class="slide-counter" id="counter">1 / 12</span>
+    <button class="btn" id="noteToggle" onclick="toggleNotes()">講師メモ 表示</button>
+  </div>
+</div>
+<div class="progress-bar" id="progress" style="width:8.33%"></div>
+
+<main id="main">
+
+<!-- SLIDE 1: Title -->
+<div class="slide title-slide active" id="slide-1">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 01</div>
+    <h2>日本の社会福祉関連職<br>新卒採用スケジュールは早期化しているか？</h2>
+    <div class="subtitle">2026年卒 実績 ／ 2027年卒 見込み ／ 福祉職の特徴</div>
+  </div>
+  <div class="slide-body">
+    <p style="color:#888;font-size:14px;margin-bottom:24px">講師用資料（ノート付き）　2026年4月版</p>
+    <div class="data-grid">
+      <div class="data-card"><div class="num">9割</div><div class="label">「早期化する」と答えた企業（26卒採用）</div></div>
+      <div class="data-card green"><div class="num">3〜4倍</div><div class="label">介護職の有効求人倍率（全業種平均の）</div></div>
+      <div class="data-card blue"><div class="num">80%</div><div class="label">3月解禁前に一次選考を開始する企業（27卒）</div></div>
+    </div>
+    <div class="highlight-box" style="margin-top:20px">
+      <p>「福祉職の採用は遅い」という従来の常識は崩れつつある。<br>大規模法人を中心に、一般企業と同様の"超早期化"が進行中。</p>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-1">
+    <h4>講師メモ</h4>
+    <p>授業の冒頭で問いかけ：<strong>「皆さんは就活をいつ始めようと思っていますか？」</strong></p>
+    <ul>
+      <li>多くの学生が「3年生の3月（就活解禁）から」と答えることが予想される</li>
+      <li>「その認識は今や5〜6年前の常識」であることをデータで示す</li>
+      <li>福祉職は「遅い」というイメージがあるが、それも変わりつつあることを本スライドで提示する</li>
+    </ul>
+    <span class="timing">目安時間：5分</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: 目次 -->
+<div class="slide" id="slide-2">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 02</div>
+    <h2>本日の内容</h2>
+  </div>
+  <div class="slide-body">
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-content">
+          <h4>政府ルールと現実のギャップ</h4>
+          <p>政府が定める「3月解禁・6月選考」ルールと、実態がいかに乖離しているかを確認</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot red">2</div>
+        <div class="timeline-content">
+          <h4>2026年卒 採用の実績</h4>
+          <p>採用難易度・早期化率・内々定率の実データ</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot orange">3</div>
+        <div class="timeline-content">
+          <h4>2027年卒 採用の見込み</h4>
+          <p>さらなる早期化・初任給引き上げ・学生側の動向</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot green">4</div>
+        <div class="timeline-content">
+          <h4>社会福祉関連職の採用スケジュールの特徴</h4>
+          <p>国家試験・実習・通年採用の構造的理由と、近年の変化</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">5</div>
+        <div class="timeline-content">
+          <h4>人材不足の深刻さ</h4>
+          <p>有効求人倍率・将来の需給ギャップ・採用競争の激化</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot red">6</div>
+        <div class="timeline-content">
+          <h4>まとめ：学生が取るべきアクション</h4>
+          <p>早期化を踏まえた就活戦略と、福祉職ならではの準備ポイント</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-2">
+    <h4>講師メモ</h4>
+    <p>目次を見せながら全体の流れを説明する。特に「4. 社会福祉関連職の特徴」が本授業のコアであることを強調。</p>
+    <ul>
+      <li>一般企業の早期化データ（1〜3）を先に示してから、福祉職の特殊性（4）を対比させる構成</li>
+      <li>「今日の授業を終えると、いつから就活を始めるべきか判断できるようになる」と目標を提示するとよい</li>
+    </ul>
+    <span class="timing">目安時間：2分</span>
+  </div>
+</div>
+
+<!-- SLIDE 3: 政府ルールと現実 -->
+<div class="slide" id="slide-3">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 03</div>
+    <h2>政府ルール vs. 採用の実態</h2>
+    <div class="subtitle">「3月解禁・6月選考」は守られているか？</div>
+  </div>
+  <div class="slide-body">
+    <section class="block">
+      <h3>政府（関係省庁連絡会議）の定めるルール</h3>
+      <table class="slide-table">
+        <tr><th>項目</th><th>原則</th><th>実態（2026年卒）</th></tr>
+        <tr><td>広報活動解禁</td><td>卒業前年の <strong>3月1日以降</strong></td><td>3年生の夏（7〜9月）から実質開始</td></tr>
+        <tr><td>採用選考開始</td><td>卒業年度の <strong>6月1日以降</strong></td><td><strong>79.9%の企業が3月以前に選考開始</strong></td></tr>
+        <tr><td>正式内定日</td><td>卒業年度の <strong>10月1日以降</strong></td><td>変わらず（正式内定のみ）</td></tr>
+      </table>
+    </section>
+    <div class="alert-box">
+      <p>⚠️ 「内々定」「早期選考」という形で、実際の採用活動は政府ルールよりも<strong>6〜12か月早く進んでいる</strong>。</p>
+    </div>
+    <section class="block">
+      <h3>採用活動の実際のフロー（大手・早期化企業）</h3>
+      <div class="flow">
+        <div class="flow-item orange">3年生夏<br>インターン</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">3年生秋冬<br>インターン</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item red">3年生冬〜4年春<br>早期選考・内々定</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item green">3月（解禁）<br>就活終了済</div>
+      </div>
+    </section>
+  </div>
+  <div class="instructor-note" id="note-3">
+    <h4>講師メモ</h4>
+    <p>「政府のルールがある＝守られている」と思っている学生が多い。ここで認識を修正する。</p>
+    <ul>
+      <li><strong>「内々定」はルール上の「内定」ではない</strong>ため、企業は早期に出しても問題なし、というロジックを説明</li>
+      <li>「インターンシップ＝企業研究の場」から「インターンシップ＝採用選考の場」へ変化していることを強調</li>
+      <li>学生が「3月から就活しよう」と思っていた時点で、すでに多くの企業は採用終了に近い状況になっている</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 4: 2026年卒 実績 -->
+<div class="slide" id="slide-4">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 04</div>
+    <h2>2026年卒 採用の実績</h2>
+    <div class="subtitle">早期化はどこまで進んだか</div>
+  </div>
+  <div class="slide-body">
+    <div class="data-grid">
+      <div class="data-card"><div class="num">8割超</div><div class="label">採用が「難しくなる」と答えた企業</div></div>
+      <div class="data-card red"><div class="num">9割</div><div class="label">採用が「早期化する」と答えた企業<br><small style="font-size:11px">(「早期化すると思う」57.3% + 「どちらかと言えば」30.2%)</small></div></div>
+      <div class="data-card orange"><div class="num">46%</div><div class="label">採用スケジュールを「早めた/早める」と答えた企業</div></div>
+    </div>
+    <section class="block" style="margin-top:20px">
+      <h3>内々定獲得率の推移（2026年卒・学生側）</h3>
+      <table class="slide-table">
+        <tr><th>時点</th><th>内々定率</th><th>前年比</th></tr>
+        <tr><td>2025年1月末</td><td><strong>48.2%</strong>（過去最高水準）</td><td>大幅増</td></tr>
+        <tr><td>2025年2月末</td><td><strong>54.3%</strong></td><td>前年卒より1か月以上早いペース</td></tr>
+        <tr><td>内々定出し最多時期</td><td colspan="2">2025年<strong>1・2月</strong>（20.6%）、次いで2024年11・12月（16.9%）</td></tr>
+      </table>
+    </section>
+    <div class="highlight-box">
+      <p>2026年卒の2月末時点で過半数（54.3%）がすでに内々定あり。<br>「3月解禁から就活開始」では出遅れどころか半分が終わっている。</p>
+    </div>
+    <div class="source">出典：学情プレスリリース、HRzine、マイナビキャリアリサーチLab調査</div>
+  </div>
+  <div class="instructor-note" id="note-4">
+    <h4>講師メモ</h4>
+    <p>数字を見せながら「衝撃を与える」スライド。具体的な問いかけをしながら進める。</p>
+    <ul>
+      <li><strong>問いかけ例</strong>：「2月末に54%が内々定を持っているということは、就活を3月に始めた場合、あなたはどのような状況からのスタートになりますか？」</li>
+      <li>「2年前の2024年卒4月1日時点の内定率は48.4%。2022年卒は28.1%」と経年変化も伝えると説得力が増す</li>
+      <li>業界・企業規模によって格差があることも付け加える（中小法人は遅いケースも多い）</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 5: 2027年卒 見込み -->
+<div class="slide" id="slide-5">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 05</div>
+    <h2>2027年卒 採用の見込み</h2>
+    <div class="subtitle">早期化はさらに加速する</div>
+  </div>
+  <div class="slide-body">
+    <div class="data-grid">
+      <div class="data-card"><div class="num">8割超</div><div class="label">採用が「難しくなる」と予想する企業</div></div>
+      <div class="data-card red"><div class="num">79.9%</div><div class="label">3月解禁「前」に一次選考を開始する企業</div></div>
+      <div class="data-card orange"><div class="num">45.8%</div><div class="label">年内（2025年10〜12月）に一次選考を開始予定の企業</div></div>
+      <div class="data-card green"><div class="num">29.3%</div><div class="label">2027年卒の2025年11月末時点の内々定率<br><small style="font-size:11px">（前年同期比 +12.4pt・過去最高）</small></div></div>
+    </div>
+    <section class="block" style="margin-top:16px">
+      <h3>2027年卒 学生の内々定率推移</h3>
+      <table class="slide-table">
+        <tr><th>時点</th><th>文系</th><th>理系</th><th>全体</th></tr>
+        <tr><td>2025年11月末</td><td>24.4%</td><td><strong>40.7%</strong><span class="badge">前年比2倍超</span></td><td><strong>29.3%</strong></td></tr>
+        <tr><td>2025年12月末</td><td>33.1%</td><td>46.3%</td><td><strong>37.4%</strong></td></tr>
+        <tr><td>2026年1月末</td><td>—</td><td>—</td><td><strong>48.5%</strong></td></tr>
+      </table>
+    </section>
+    <div class="highlight-box">
+      <p>初任給引き上げ予定企業：<strong>55.4%</strong>（上場企業は前年比+17.6ポイント）<br>
+      2027年卒の学部卒平均初任給：<strong>234,223円</strong>（前年比+8,437円）</p>
+    </div>
+    <div class="source">出典：学情プレスリリース、マイナビキャリアリサーチLab、リクルートワークス研究所</div>
+  </div>
+  <div class="instructor-note" id="note-5">
+    <h4>講師メモ</h4>
+    <p>「今の3年生（2027年卒）の状況」として、現実感を持たせる。</p>
+    <ul>
+      <li>現在の受講生が何年卒かを確認し、「このデータはあなた自身の話」と接続させる</li>
+      <li>初任給引き上げは採用競争の激化を背景とした動き。福祉業界でも起きていることを後のスライドで連携</li>
+      <li>理系の内々定率が文系を大幅に上回る理由（早期に志望業界を絞り、インターン参加率が高い）も補足できると深まる</li>
+      <li><strong>「48.5%が1月末に内々定あり。2月・3月からでは残り枠を争う構図」</strong>と危機感を伝える</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 6: 福祉職の特徴①国家試験 -->
+<div class="slide" id="slide-6">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 06</div>
+    <h2>社会福祉関連職の特徴①</h2>
+    <div class="subtitle">国家試験スケジュールと採用の関係</div>
+  </div>
+  <div class="slide-body">
+    <section class="block">
+      <h3>対象となる主な国家資格と試験時期</h3>
+      <table class="slide-table">
+        <tr><th>資格</th><th>試験時期</th><th>合格発表</th></tr>
+        <tr><td>社会福祉士</td><td><strong>2月上旬</strong></td><td>3月中旬</td></tr>
+        <tr><td>介護福祉士</td><td><strong>1月下旬〜2月上旬</strong></td><td>3月中旬</td></tr>
+        <tr><td>精神保健福祉士</td><td><strong>2月上旬</strong></td><td>3月中旬</td></tr>
+        <tr><td>保育士（国試）</td><td><strong>4月・10月</strong></td><td>6月・12月</td></tr>
+      </table>
+    </section>
+    <section class="block">
+      <h3>「国家試験合格条件付き内定」の仕組み</h3>
+      <ul class="bullets">
+        <li>内定時期：秋〜冬（10〜12月）に「<strong>国家試験合格を条件とした内定</strong>」が一般的</li>
+        <li>不合格でも多くの法人は内定取り消しとせず「<strong>翌年再受験条件で非常勤・契約採用継続</strong>」の対応が多い</li>
+        <li>経験者と新卒が同時に応募した際、経験者が優先されるケースもあるため<strong>早期内定取得が有利</strong></li>
+      </ul>
+    </section>
+    <div class="alert-box">
+      <p>📌 国試前（秋〜冬）から就活をしないと、合格発表後（3月）は採用枠が埋まり始めている。<br>
+      「国試が終わってから就活」は、すでに遅い可能性が高い。</p>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-6">
+    <h4>講師メモ</h4>
+    <p>社会福祉・介護・保育の学生特有の悩みに寄り添いながら説明する。</p>
+    <ul>
+      <li><strong>よくある誤解</strong>：「国試に合格してから就活すれば安心」→ 実は逆。合格前に内定を取っておく方が安全</li>
+      <li>「合格条件付き内定」の制度を具体的に説明する（内定書類に条件として記載される場合が多い）</li>
+      <li>不合格時の対応も法人によって異なるため、内定時に確認を促す</li>
+      <li>保育士は国試スケジュールが異なる（4月・10月）ため、養成校の実習スケジュールとの兼ね合いが特に複雑</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 7: 福祉職の特徴②実習 -->
+<div class="slide" id="slide-7">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 07</div>
+    <h2>社会福祉関連職の特徴②</h2>
+    <div class="subtitle">実習スケジュールと就活の時間的競合</div>
+  </div>
+  <div class="slide-body">
+    <section class="block">
+      <h3>社会福祉士養成課程の実習（2021年度入学者から新カリキュラム適用）</h3>
+      <table class="slide-table">
+        <tr><th>項目</th><th>旧カリキュラム</th><th>新カリキュラム</th></tr>
+        <tr><td>実習時間</td><td>180時間</td><td><strong>240時間以上</strong></td></tr>
+        <tr><td>実習か所数</td><td>1か所</td><td><strong>2か所以上</strong></td></tr>
+        <tr><td>実習時期</td><td colspan="2">大学<strong>4年の6〜10月</strong>に集中（就活と完全にかぶる）</td></tr>
+      </table>
+    </section>
+    <section class="block">
+      <h3>保育士養成校の実習スケジュール（典型例）</h3>
+      <ul class="bullets">
+        <li>4年の<strong>6〜10月</strong>に実習（保育実習Ⅱ・教育実習）が集中</li>
+        <li>実習中は基本的に就活ができない状態 → 実習後の<strong>10〜11月から選考参加</strong>する学生が多い</li>
+        <li>一方、採用側（保育園・認定こども園）は<strong>4〜5月から内定出し</strong>を始めている大手法人もある</li>
+      </ul>
+    </section>
+    <div class="alert-box">
+      <p>⚠️ 実習中も就職活動はできる（施設との事前調整で休みを取る等）。<br>
+      「実習が終わってから動く」という発想では、早期採用の流れに完全に乗り遅れる。</p>
+    </div>
+    <div class="highlight-box">
+      <p>【対策】実習前（3〜5月）にインターン・説明会参加を終え、<br>実習中でも並行して書類選考・採用サイト登録を進める。</p>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-7">
+    <h4>講師メモ</h4>
+    <p>学生が最も「どうしたらいいか分からない」と感じるパートなので、具体的な時系列を丁寧に解説する。</p>
+    <ul>
+      <li>新カリキュラムへの移行時期（2021年入学者＝2025年3月卒業者から）を確認し、受講生が該当するか確認</li>
+      <li><strong>「実習と就活は両立できる」ことを伝える</strong>：実習記録の提出期限や休日調整など、方法論を共有する</li>
+      <li>実習先が内定先・就職先になるケースも多いことを補足（施設の雰囲気や業務内容を実際に体験できる）</li>
+      <li>OB・OGへのヒアリングや就職支援室への早期相談を促す</li>
+    </ul>
+    <span class="timing">目安時間：10分</span>
+  </div>
+</div>
+
+<!-- SLIDE 8: 福祉職の特徴③通年採用 -->
+<div class="slide" id="slide-8">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 08</div>
+    <h2>社会福祉関連職の特徴③</h2>
+    <div class="subtitle">通年採用・3波構造と近年の変化</div>
+  </div>
+  <div class="slide-body">
+    <section class="block">
+      <h3>福祉職採用の「3波構造」（従来型）</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot green">第1波</div>
+          <div class="timeline-content">
+            <h4>春〜秋（4〜10月）</h4>
+            <p>採用計画に基づく定期採用。採用枠が多く、新人研修体制も整備されている。<strong>最も有利な時期。</strong></p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot orange">第2波</div>
+          <div class="timeline-content">
+            <h4>冬（11〜12月）</h4>
+            <p>欠員補充の動きが活発化。採用枠は絞られるが、人材不足の現場は常に求人あり。</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot red">第3波</div>
+          <div class="timeline-content">
+            <h4>年明け〜年度末（1〜3月）</h4>
+            <p>小規模施設・急な欠員補充が中心。国家試験後に就活を始める学生が流入する時期。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="block">
+      <h3>近年（2025〜2026年）の変化：第1波の前倒し</h3>
+      <div class="flow">
+        <div class="flow-item orange">3年夏<br>インターン</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">3年秋冬<br>インターン</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item red">3年冬〜4年春<br>早期選考・内々定</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item green">6月〜<br>正式内定</div>
+      </div>
+      <ul class="bullets" style="margin-top:12px">
+        <li>大規模社会福祉法人グループでは<strong>大学3年の夏（7〜9月）</strong>からインターン開始</li>
+        <li>インターン参加者を優先的に早期選考するケースが増加 <span class="badge">大手法人中心</span></li>
+        <li>第1波の採用活動が事実上、<strong>3年生の夏から始まっている</strong></li>
+      </ul>
+    </section>
+  </div>
+  <div class="instructor-note" id="note-8">
+    <h4>講師メモ</h4>
+    <p>「通年採用があるから焦らなくていい」という安心感を壊す重要なスライド。</p>
+    <ul>
+      <li>通年採用の存在は事実だが、「採用の質（研修体制・配属先・待遇）」は第1波が最もよい傾向がある点を強調</li>
+      <li>第3波（年明け以降）の求人は欠員補充が多く、「即戦力として入ってすぐ現場」になりがち</li>
+      <li>大規模法人ほど早期化が進み、小規模施設は依然として年度末採用も多い → <strong>志望先の規模や傾向を事前調査することが重要</strong></li>
+      <li>「どんなキャリアをスタートさせたいか」によって、いつ就活するかが変わる、という視点も提供できるとよい</li>
+    </ul>
+    <span class="timing">目安時間：10分</span>
+  </div>
+</div>
+
+<!-- SLIDE 9: 一般業界との比較 -->
+<div class="slide" id="slide-9">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 09</div>
+    <h2>一般業界と社会福祉関連職の採用時期比較</h2>
+    <div class="subtitle">今はどこまで近づいているか</div>
+  </div>
+  <div class="slide-body">
+    <table class="slide-table">
+      <tr>
+        <th>項目</th>
+        <th>一般企業（大手）</th>
+        <th>福祉関連職（従来型）</th>
+        <th>福祉関連職（近年の早期化）</th>
+      </tr>
+      <tr>
+        <td>採用広報開始</td>
+        <td>3年3月（原則）<br><strong>実態：3年夏〜秋</strong></td>
+        <td>4年3〜6月</td>
+        <td><strong>3年夏（インターン）から実質開始</strong></td>
+      </tr>
+      <tr>
+        <td>採用選考開始</td>
+        <td>4年6月（原則）<br><strong>実態：3年秋〜冬</strong></td>
+        <td>4年6月〜</td>
+        <td><strong>3年冬〜4年春（早期選考）</strong></td>
+      </tr>
+      <tr>
+        <td>内々定出し</td>
+        <td>3年冬〜4年春<br>（最多：1〜2月）</td>
+        <td>4年6〜10月</td>
+        <td><strong>4年4〜6月（一部は3年冬）</strong></td>
+      </tr>
+      <tr>
+        <td>正式内定</td>
+        <td>4年10月1日以降</td>
+        <td>4年10月以降</td>
+        <td>4年10月以降（変わらず）</td>
+      </tr>
+      <tr>
+        <td>採用ピーク</td>
+        <td>4年春〜夏</td>
+        <td>4年夏〜冬（3波）</td>
+        <td><strong>4年春〜秋（1波に集約）</strong></td>
+      </tr>
+    </table>
+    <div class="green-box" style="margin-top:16px">
+      <p>✅ 大規模法人中心に一般企業の早期化モデルが福祉業界にも浸透。<br>
+      「福祉職は遅い」という常識は、特に大手志望者には当てはまらなくなっている。</p>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-9">
+    <h4>講師メモ</h4>
+    <p>比較表をベースに、受講生の志望先（大規模法人か小規模施設か）によって異なることを伝える。</p>
+    <ul>
+      <li>「大手社会福祉法人」「グループ経営の介護会社」→ 一般企業と同レベルの早期化が進んでいる</li>
+      <li>「地域の中小施設」「単独の特養・保育園」→ 依然として年度末〜通年採用も多い</li>
+      <li>受講生に「どちらを志望しているか」をグループで話し合わせるワークを挿入すると理解が深まる</li>
+      <li>どちらにせよ、3年生の秋〜冬から情報収集を始めることを強く推奨する</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 10: 人材不足 -->
+<div class="slide" id="slide-10">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 10</div>
+    <h2>人材不足の深刻さと採用競争の激化</h2>
+    <div class="subtitle">早期化を後押しする最大の要因</div>
+  </div>
+  <div class="slide-body">
+    <section class="block">
+      <h3>介護分野の有効求人倍率（売り手市場の実態）</h3>
+      <div class="data-grid">
+        <div class="data-card red"><div class="num">3〜4倍</div><div class="label">介護関係職種の有効求人倍率<br><small style="font-size:11px">（全職種平均1.2倍の約3倍）</small></div></div>
+        <div class="data-card red"><div class="num">14倍</div><div class="label">訪問介護員の有効求人倍率<br><small style="font-size:11px">（2023年度・特に深刻）</small></div></div>
+        <div class="data-card orange"><div class="num">86.6%</div><div class="label">採用困難を感じている介護事業所</div></div>
+      </div>
+    </section>
+    <section class="block">
+      <h3>将来の需給ギャップ（厚生労働省推計）</h3>
+      <table class="slide-table">
+        <tr><th>時点</th><th>必要な介護職員数</th><th>不足数（推計）</th></tr>
+        <tr><td><strong>2026年度</strong></td><td>約240万人</td><td><strong>約25万人不足</strong></td></tr>
+        <tr><td><strong>2040年度</strong></td><td>約280万人</td><td><strong>約57〜69万人不足</strong></td></tr>
+      </table>
+      <p style="font-size:13px;color:#666;margin-top:8px">毎年3〜6万人の新規増員が必要。新卒採用はその中核を担う。</p>
+    </section>
+    <section class="block">
+      <h3>採用困難の主な理由（介護事業所調査）</h3>
+      <ul class="bullets">
+        <li>「他産業より労働条件が良くない」：<strong>53.7%</strong></li>
+        <li>「同業他社との人材獲得競争が激しい」：<strong>53.1%</strong></li>
+        <li>→ 競争激化を受け、<strong>初任給引き上げ・早期採用・インターン充実</strong>で差別化を図る動き</li>
+      </ul>
+    </section>
+    <div class="source">出典：厚生労働省介護保険事業状況報告・有効求人倍率統計、福祉医療機構調査</div>
+  </div>
+  <div class="instructor-note" id="note-10">
+    <h4>講師メモ</h4>
+    <p>「人手不足だから就活が楽」という誤解を修正するパート。</p>
+    <ul>
+      <li><strong>よくある誤解</strong>：「介護は人手不足だからいつでも受かる」→ 誤り。<strong>「良い職場の席」は早く埋まる</strong></li>
+      <li>有効求人倍率が高い＝求人数が多い、しかし「選ばれる職場・法人」の採用枠は限られている</li>
+      <li>初任給引き上げは、良い職場が早期に学生を確保しようとしている表れ</li>
+      <li>2023〜2024年卒で医療・福祉への就職者数が一旦減少したデータも示すと（業界イメージ問題）、採用競争の複雑さが伝わる</li>
+    </ul>
+    <span class="timing">目安時間：8分</span>
+  </div>
+</div>
+
+<!-- SLIDE 11: 早期化対応の実践的アドバイス -->
+<div class="slide" id="slide-11">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 11</div>
+    <h2>早期化に対応する就活戦略</h2>
+    <div class="subtitle">福祉系学生が押さえるべき行動タイムライン</div>
+  </div>
+  <div class="slide-body">
+    <table class="slide-table">
+      <tr><th>時期</th><th>企業・法人側の動き</th><th>学生がすべきこと</th></tr>
+      <tr>
+        <td><strong>3年生 6〜9月<br>（夏）</strong></td>
+        <td>夏インターンシップ実施、説明会設計開始</td>
+        <td><span style="color:#c0392b;font-weight:700">▶ インターン情報収集・参加</span><br>採用サイト登録・自己分析開始</td>
+      </tr>
+      <tr>
+        <td><strong>3年生 10月〜<br>2月（秋冬）</strong></td>
+        <td>秋冬インターン実施、早期選考準備</td>
+        <td><span style="color:#c0392b;font-weight:700">▶ 秋冬インターン参加・OB訪問</span><br>志望法人リスト作成、ES準備</td>
+      </tr>
+      <tr>
+        <td><strong>4年生 3〜5月<br>（解禁後）</strong></td>
+        <td>説明会・ES受付・本格選考</td>
+        <td><span style="color:#c0392b;font-weight:700">▶ エントリー・説明会参加・面接</span><br><small>※実習開始前に終わらせたい</small></td>
+      </tr>
+      <tr>
+        <td><strong>4年生 6〜10月<br>（実習期間）</strong></td>
+        <td>内定出し・フォロー</td>
+        <td><span style="color:#27ae60;font-weight:700">▶ 内定受諾済が理想</span><br>実習と並行して選考が必要な場合は事前調整</td>
+      </tr>
+    </table>
+    <div class="highlight-box" style="margin-top:16px">
+      <p>福祉職ならではのポイント：<br>
+      国家試験（2月）前に内々定を取得 → 試験に集中できる！<br>
+      実習先でのパフォーマンスが採用評価につながるケースも多い。</p>
+    </div>
+  </div>
+  <div class="instructor-note" id="note-11">
+    <h4>講師メモ</h4>
+    <p>「では、自分は何をすべきか」を具体的に伝えるパート。行動変容を促す。</p>
+    <ul>
+      <li>現在の受講生の学年・時期を確認し、「今から始めて間に合うか」を判断する材料を提示する</li>
+      <li>インターンシップへの参加が難しい場合の代替策（施設見学、ボランティア、OB訪問）も補足</li>
+      <li><strong>「早期化している＝良い就職先の競争は激しい」と「人材不足＝どこかには就職できる」は両立する</strong>ことを整理</li>
+      <li>就職支援室・キャリアセンターへの相談を具体的に促す（予約方法まで案内できるとよい）</li>
+      <li>グループワーク：「自分の就活タイムラインを書いてみよう」（5分程度）</li>
+    </ul>
+    <span class="timing">目安時間：12分（ワーク含む）</span>
+  </div>
+</div>
+
+<!-- SLIDE 12: まとめ -->
+<div class="slide" id="slide-12">
+  <div class="slide-header">
+    <div class="slide-num">SLIDE 12</div>
+    <h2>まとめ：7つのキーメッセージ</h2>
+    <div class="subtitle">今日の授業で学んだこと</div>
+  </div>
+  <div class="slide-body">
+    <ul class="bullets">
+      <li>① <strong>採用活動の「3月解禁」は形骸化</strong>。実態は3年生の夏から始まっており、2027年卒では79.9%の企業が解禁前に選考開始。</li>
+      <li>② <strong>2月末に過半数が内々定取得済み</strong>（2026年卒54.3%）。3月から動き出す人は「半分の席が埋まった後」からのスタート。</li>
+      <li>③ <strong>社会福祉関連職は「国家試験（2月）」「実習（4〜10月）」が就活と競合</strong>。だからこそ3年生の秋冬から準備が必要。</li>
+      <li>④ <strong>大規模法人では福祉職でも「夏インターン→冬早期選考→春内定」モデルが浸透</strong>。一般企業と同じ感覚で動く必要がある。</li>
+      <li>⑤ <strong>介護職の有効求人倍率は全業種平均の3〜4倍</strong>。人手不足だが「良い職場」の採用枠は限られている。</li>
+      <li>⑥ <strong>2040年に約57万人の介護職員不足</strong>が予測されており、新卒採用競争は今後さらに激化する。</li>
+      <li>⑦ <strong>「国試後に就活」「実習後に動く」では遅い</strong>。並行して進める計画的な就活が福祉系学生のカギ。</li>
+    </ul>
+    <div class="green-box" style="margin-top:16px">
+      <p>今すぐできること：就職支援室に相談 ／ インターンシップを探す ／ OB・OGに話を聞く</p>
+    </div>
+    <div class="source">参考資料：学情プレスリリース、マイナビキャリアリサーチLab、リクルートワークス研究所、厚生労働省、全国社会福祉協議会「福祉のお仕事」</div>
+  </div>
+  <div class="instructor-note" id="note-12">
+    <h4>講師メモ</h4>
+    <p>授業の締めくくり。7つのポイントを読み上げながら、学生に反応を確認する。</p>
+    <ul>
+      <li><strong>振り返り問いかけ</strong>：「今日の授業を聞いて、就活を始める時期の認識は変わりましたか？」</li>
+      <li>次回以降の授業テーマ（ES・面接・自己分析など）への橋渡しをする</li>
+      <li>感想シート・リフレクションカードを活用する場合は、「今日知って最も驚いたデータ」を書かせると振り返りになる</li>
+      <li>「人材不足の業界に進む自分たちは社会的に求められている」というポジティブなメッセージで締める</li>
+    </ul>
+    <span class="timing">目安時間：8分（振り返り含む）</span>
+  </div>
+</div>
+
+</main>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)" disabled>◀ 前へ</button>
+  <button id="nextBtn" onclick="changeSlide(1)">次へ ▶</button>
+</div>
+
+<script>
+let current = 1;
+const total = 12;
+let notesVisible = false;
+
+function changeSlide(dir) {
+  const prev = current;
+  current = Math.max(1, Math.min(total, current + dir));
+  if (prev !== current) {
+    document.getElementById('slide-' + prev).classList.remove('active');
+    document.getElementById('slide-' + current).classList.add('active');
+    updateUI();
+    if (notesVisible) {
+      const note = document.getElementById('note-' + current);
+      if (note) note.classList.add('show');
+    }
+  }
+}
+
+function updateUI() {
+  document.getElementById('counter').textContent = current + ' / ' + total;
+  document.getElementById('prevBtn').disabled = current === 1;
+  document.getElementById('nextBtn').disabled = current === total;
+  document.getElementById('progress').style.width = (current / total * 100) + '%';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function toggleNotes() {
+  notesVisible = !notesVisible;
+  const btn = document.getElementById('noteToggle');
+  btn.textContent = notesVisible ? '講師メモ 非表示' : '講師メモ 表示';
+  btn.classList.toggle('active', notesVisible);
+  document.querySelectorAll('.instructor-note').forEach(function(el) {
+    if (notesVisible) {
+      el.classList.add('show');
+    } else {
+      el.classList.remove('show');
+    }
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 'n' || e.key === 'N') {
+    toggleNotes();
+  }
+});
+</script>
+</body>
+</html>
